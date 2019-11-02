@@ -1,8 +1,8 @@
 <package format="2">
-  <name>car_demo</name>
+  <name>demo</name>
   <version>0.0.1</version>
   <description>
-  The car demo
+  Prius demo
   </description>
   <maintainer email="tfoote@openrobotics.org">Tully Foote</maintainer>
   <license>APACHE 2.0</license>
