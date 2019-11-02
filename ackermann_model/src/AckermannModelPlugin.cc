@@ -24,16 +24,15 @@
 #include <ignition/transport/Node.hh>
 #include <ignition/transport/AdvertiseOptions.hh>
 
-#include "PriusHybridPlugin.hh"
+#include "ackermann_model/AckermannModelPlugin.hh"
 #include <gazebo/common/PID.hh>
 #include <gazebo/common/Time.hh>
-#include "PriusHybridPlugin.hh"
 
 #include <ros/ros.h>
 
 namespace gazebo
 {
-  class PriusHybridPluginPrivate
+  class AckermannModelPluginPrivate
   {
     /// \enum DirectionType
     /// \brief Direction selector switch type.
@@ -294,14 +293,14 @@ namespace gazebo
 using namespace gazebo;
 
 /////////////////////////////////////////////////
-PriusHybridPlugin::PriusHybridPlugin()
-    : dataPtr(new PriusHybridPluginPrivate)
+AckermannModelPlugin::AckermannModelPlugin()
+    : dataPtr(new AckermannModelPluginPrivate)
 {
   int argc = 0;
   char *argv = nullptr;
-  ros::init(argc, &argv, "PriusHybridPlugin");
+  ros::init(argc, &argv, "AckermannModelPlugin");
   this->robot_namespace_ = "";
-  this->dataPtr->directionState = PriusHybridPluginPrivate::FORWARD;
+  this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
   this->dataPtr->flWheelRadius = 0.3;
   this->dataPtr->frWheelRadius = 0.3;
   this->dataPtr->blWheelRadius = 0.3;
@@ -309,7 +308,7 @@ PriusHybridPlugin::PriusHybridPlugin()
 }
 
 
-void PriusHybridPlugin::OnPriusCommand(const prius_msgs::Control::ConstPtr &msg)
+void AckermannModelPlugin::OnPriusCommand(const prius_msgs::Control::ConstPtr &msg)
 {
   this->dataPtr->lastSteeringCmdTime = this->dataPtr->world->SimTime();
   this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
@@ -334,13 +333,13 @@ void PriusHybridPlugin::OnPriusCommand(const prius_msgs::Control::ConstPtr &msg)
   switch (msg->shift_gears)
   {
     case prius_msgs::Control::NEUTRAL:
-      this->dataPtr->directionState = PriusHybridPluginPrivate::NEUTRAL;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
       break;
     case prius_msgs::Control::FORWARD:
-      this->dataPtr->directionState = PriusHybridPluginPrivate::FORWARD;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
       break;
     case prius_msgs::Control::REVERSE:
-      this->dataPtr->directionState = PriusHybridPluginPrivate::REVERSE;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
       break;
     default:
       break;
@@ -348,17 +347,17 @@ void PriusHybridPlugin::OnPriusCommand(const prius_msgs::Control::ConstPtr &msg)
 }
 
 /////////////////////////////////////////////////
-PriusHybridPlugin::~PriusHybridPlugin()
+AckermannModelPlugin::~AckermannModelPlugin()
 {
   this->dataPtr->updateConnection.reset();
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
+void AckermannModelPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 {
-  gzwarn << "PriusHybridPlugin loading params" << std::endl;
+  gzwarn << "AckermannModelPlugin loading params" << std::endl;
   // shortcut to this->dataPtr
-  PriusHybridPluginPrivate *dPtr = this->dataPtr.get();
+  AckermannModelPluginPrivate *dPtr = this->dataPtr.get();
 
   this->dataPtr->model = _model;
   this->dataPtr->world = this->dataPtr->model->GetWorld();
@@ -371,18 +370,18 @@ void PriusHybridPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   if (_sdf->HasElement("robotNamespace"))
     this->robot_namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>() + "/";
   ros::NodeHandle nh(this->robot_namespace_);
-  this->dataPtr->controlSub = nh.subscribe("prius", 10, &PriusHybridPlugin::OnPriusCommand, this);
+  this->dataPtr->controlSub = nh.subscribe("prius", 10, &AckermannModelPlugin::OnPriusCommand, this);
 
   this->dataPtr->node.Subscribe("/prius/reset",
-      &PriusHybridPlugin::OnReset, this);
+      &AckermannModelPlugin::OnReset, this);
   this->dataPtr->node.Subscribe("/prius/stop",
-      &PriusHybridPlugin::OnStop, this);
+      &AckermannModelPlugin::OnStop, this);
 
-  this->dataPtr->node.Subscribe("/cmd_vel", &PriusHybridPlugin::OnCmdVel, this);
+  this->dataPtr->node.Subscribe("/cmd_vel", &AckermannModelPlugin::OnCmdVel, this);
   this->dataPtr->node.Subscribe("/cmd_gear",
-      &PriusHybridPlugin::OnCmdGear, this);
+      &AckermannModelPlugin::OnCmdGear, this);
   this->dataPtr->node.Subscribe("/cmd_mode",
-      &PriusHybridPlugin::OnCmdMode, this);
+      &AckermannModelPlugin::OnCmdMode, this);
 
   this->dataPtr->posePub = this->dataPtr->node.Advertise<ignition::msgs::Pose>(
       "/prius/pose");
@@ -659,21 +658,21 @@ void PriusHybridPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   this->dataPtr->frWheelSteeringPID.SetCmdMin(-kMaxSteeringForceMagnitude);
 
   this->dataPtr->updateConnection = event::Events::ConnectWorldUpdateBegin(
-      std::bind(&PriusHybridPlugin::Update, this));
+      std::bind(&AckermannModelPlugin::Update, this));
 
   this->dataPtr->keyboardSub =
     this->dataPtr->gznode->Subscribe("~/keyboard/keypress",
-        &PriusHybridPlugin::OnKeyPress, this, true);
+        &AckermannModelPlugin::OnKeyPress, this, true);
 
   this->dataPtr->worldControlPub =
     this->dataPtr->gznode->Advertise<msgs::WorldControl>("~/world_control");
 
-  this->dataPtr->node.Subscribe("/keypress", &PriusHybridPlugin::OnKeyPressIgn,
+  this->dataPtr->node.Subscribe("/keypress", &AckermannModelPlugin::OnKeyPressIgn,
       this);
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnCmdVel(const ignition::msgs::Pose &_msg)
+void AckermannModelPlugin::OnCmdVel(const ignition::msgs::Pose &_msg)
 {
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
@@ -685,7 +684,7 @@ void PriusHybridPlugin::OnCmdVel(const ignition::msgs::Pose &_msg)
   this->dataPtr->lastSteeringCmdTime = this->dataPtr->world->SimTime();
 }
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnCmdGear(const ignition::msgs::Int32 &_msg)
+void AckermannModelPlugin::OnCmdGear(const ignition::msgs::Int32 &_msg)
 {
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
@@ -694,11 +693,11 @@ void PriusHybridPlugin::OnCmdGear(const ignition::msgs::Int32 &_msg)
   state += _msg.data();
   state = ignition::math::clamp(state, -1, 1);
   this->dataPtr->directionState =
-      static_cast<PriusHybridPluginPrivate::DirectionType>(state);
+      static_cast<AckermannModelPluginPrivate::DirectionType>(state);
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnCmdMode(const ignition::msgs::Boolean &/*_msg*/)
+void AckermannModelPlugin::OnCmdMode(const ignition::msgs::Boolean &/*_msg*/)
 {
   // toggle ev mode
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
@@ -706,7 +705,7 @@ void PriusHybridPlugin::OnCmdMode(const ignition::msgs::Boolean &/*_msg*/)
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::KeyControlTypeA(const int _key)
+void AckermannModelPlugin::KeyControlTypeA(const int _key)
 {
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
@@ -774,21 +773,21 @@ void PriusHybridPlugin::KeyControlTypeA(const int _key)
     case 90:
     case 122:
     {
-      this->dataPtr->directionState = PriusHybridPluginPrivate::REVERSE;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
       break;
     }
     // x neutral
     case 88:
     case 120:
     {
-      this->dataPtr->directionState = PriusHybridPluginPrivate::NEUTRAL;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
       break;
     }
     // c forward
     case 67:
     case 99:
     {
-      this->dataPtr->directionState = PriusHybridPluginPrivate::FORWARD;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
       break;
     }
 
@@ -803,7 +802,7 @@ void PriusHybridPlugin::KeyControlTypeA(const int _key)
 
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::KeyControlTypeB(const int _key)
+void AckermannModelPlugin::KeyControlTypeB(const int _key)
 {
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
@@ -817,7 +816,7 @@ void PriusHybridPlugin::KeyControlTypeB(const int _key)
       this->dataPtr->gasPedalPercent += 0.1;
       this->dataPtr->gasPedalPercent =
           std::min(this->dataPtr->gasPedalPercent, 1.0);
-      this->dataPtr->directionState = PriusHybridPluginPrivate::FORWARD;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
       this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
       break;
     }
@@ -836,12 +835,12 @@ void PriusHybridPlugin::KeyControlTypeB(const int _key)
     case 115:
     {
       this->dataPtr->brakePedalPercent = 0.0;
-      if (this->dataPtr->directionState != PriusHybridPluginPrivate::REVERSE)
+      if (this->dataPtr->directionState != AckermannModelPluginPrivate::REVERSE)
         this->dataPtr->gasPedalPercent = 0.0;
       this->dataPtr->gasPedalPercent += 0.1;
       this->dataPtr->gasPedalPercent =
           std::min(this->dataPtr->gasPedalPercent, 1.0);
-      this->dataPtr->directionState = PriusHybridPluginPrivate::REVERSE;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
       this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
       break;
     }
@@ -868,7 +867,7 @@ void PriusHybridPlugin::KeyControlTypeB(const int _key)
     case 88:
     case 120:
     {
-      this->dataPtr->directionState = PriusHybridPluginPrivate::NEUTRAL;
+      this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
       break;
     }
     // q - EV mode
@@ -892,7 +891,7 @@ void PriusHybridPlugin::KeyControlTypeB(const int _key)
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::KeyControl(const int _key)
+void AckermannModelPlugin::KeyControl(const int _key)
 {
   if (this->dataPtr->keyControl == 0)
     this->KeyControlTypeA(_key);
@@ -901,19 +900,19 @@ void PriusHybridPlugin::KeyControl(const int _key)
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnKeyPress(ConstAnyPtr &_msg)
+void AckermannModelPlugin::OnKeyPress(ConstAnyPtr &_msg)
 {
   this->KeyControl(_msg->int_value());
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnKeyPressIgn(const ignition::msgs::Any &_msg)
+void AckermannModelPlugin::OnKeyPressIgn(const ignition::msgs::Any &_msg)
 {
   this->KeyControl(_msg.int_value());
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnReset(const ignition::msgs::Any & /*_msg*/)
+void AckermannModelPlugin::OnReset(const ignition::msgs::Any & /*_msg*/)
 {
   msgs::WorldControl msg;
   msg.mutable_reset()->set_all(true);
@@ -922,7 +921,7 @@ void PriusHybridPlugin::OnReset(const ignition::msgs::Any & /*_msg*/)
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::OnStop(const ignition::msgs::Any & /*_msg*/)
+void AckermannModelPlugin::OnStop(const ignition::msgs::Any & /*_msg*/)
 {
   ignition::msgs::StringMsg req;
   ignition::msgs::StringMsg rep;
@@ -942,7 +941,7 @@ void PriusHybridPlugin::OnStop(const ignition::msgs::Any & /*_msg*/)
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::Reset()
+void AckermannModelPlugin::Reset()
 {
   this->dataPtr->odom = 0;
   this->dataPtr->flWheelSteeringPID.Reset();
@@ -953,7 +952,7 @@ void PriusHybridPlugin::Reset()
   this->dataPtr->lastModeCmdTime = 0;
   this->dataPtr->lastPedalCmdTime = 0;
   this->dataPtr->lastSteeringCmdTime = 0;
-  this->dataPtr->directionState = PriusHybridPluginPrivate::FORWARD;
+  this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
   this->dataPtr->flWheelSteeringCmd = 0;
   this->dataPtr->frWheelSteeringCmd = 0;
   this->dataPtr->handWheelCmd = 0;
@@ -972,10 +971,10 @@ void PriusHybridPlugin::Reset()
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::Update()
+void AckermannModelPlugin::Update()
 {
   // shortcut to this->dataPtr
-  PriusHybridPluginPrivate *dPtr = this->dataPtr.get();
+  AckermannModelPluginPrivate *dPtr = this->dataPtr.get();
 
   std::lock_guard<std::mutex> lock(this->dataPtr->mutex);
 
@@ -1007,7 +1006,7 @@ void PriusHybridPlugin::Update()
   // Distance traveled in miles.
   this->dataPtr->odom += (fabs(linearVel) * dt/3600.0);
 
-  bool neutral = dPtr->directionState == PriusHybridPluginPrivate::NEUTRAL;
+  bool neutral = dPtr->directionState == AckermannModelPluginPrivate::NEUTRAL;
 
   this->dataPtr->lastSimTime = curTime;
 
@@ -1270,11 +1269,11 @@ void PriusHybridPlugin::Update()
     double mpg = 1.0 / std::max(linearVel, 0.0);
 
     // Gear information: 1=drive, 2=reverse, 3=neutral
-    if (this->dataPtr->directionState == PriusHybridPluginPrivate::FORWARD)
+    if (this->dataPtr->directionState == AckermannModelPluginPrivate::FORWARD)
       consoleMsg.add_data(1.0);
-    else if (this->dataPtr->directionState == PriusHybridPluginPrivate::REVERSE)
+    else if (this->dataPtr->directionState == AckermannModelPluginPrivate::REVERSE)
       consoleMsg.add_data(2.0);
-    else if (this->dataPtr->directionState == PriusHybridPluginPrivate::NEUTRAL)
+    else if (this->dataPtr->directionState == AckermannModelPluginPrivate::NEUTRAL)
       consoleMsg.add_data(3.0);
 
     // MPH. A speedometer does not go negative.
@@ -1315,7 +1314,7 @@ void PriusHybridPlugin::Update()
 }
 
 /////////////////////////////////////////////////
-void PriusHybridPlugin::UpdateHandWheelRatio()
+void AckermannModelPlugin::UpdateHandWheelRatio()
 {
   // The total range the steering wheel can rotate
   this->dataPtr->handWheelHigh = 7.85;
@@ -1335,7 +1334,7 @@ void PriusHybridPlugin::UpdateHandWheelRatio()
 /////////////////////////////////////////////////
 // function that extracts the radius of a cylinder or sphere collision shape
 // the function returns zero otherwise
-double PriusHybridPlugin::CollisionRadius(physics::CollisionPtr _coll)
+double AckermannModelPlugin::CollisionRadius(physics::CollisionPtr _coll)
 {
   if (!_coll || !(_coll->GetShape()))
     return 0;
@@ -1355,16 +1354,16 @@ double PriusHybridPlugin::CollisionRadius(physics::CollisionPtr _coll)
 }
 
 /////////////////////////////////////////////////
-double PriusHybridPlugin::GasTorqueMultiplier()
+double AckermannModelPlugin::GasTorqueMultiplier()
 {
   // if (this->dataPtr->keyState == ON)
   {
-    if (this->dataPtr->directionState == PriusHybridPluginPrivate::FORWARD)
+    if (this->dataPtr->directionState == AckermannModelPluginPrivate::FORWARD)
       return 1.0;
-    else if (this->dataPtr->directionState == PriusHybridPluginPrivate::REVERSE)
+    else if (this->dataPtr->directionState == AckermannModelPluginPrivate::REVERSE)
       return -1.0;
   }
   return 0;
 }
 
-GZ_REGISTER_MODEL_PLUGIN(PriusHybridPlugin)
+GZ_REGISTER_MODEL_PLUGIN(AckermannModelPlugin)

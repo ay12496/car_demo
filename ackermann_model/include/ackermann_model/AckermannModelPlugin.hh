@@ -15,8 +15,8 @@
  *
 */
 
-#ifndef PRIUSCUP_PLUGINS_PRIUSHYBRIDPLUGIN_HH_
-#define PRIUSCUP_PLUGINS_PRIUSHYBRIDPLUGIN_HH_
+#ifndef PRIUSCUP_PLUGINS_ACKERMANNMODELPLUGIN_HH_
+#define PRIUSCUP_PLUGINS_ACKERMANNMODELPLUGIN_HH_
 
 #include <ignition/math/Vector3.hh>
 #include <ignition/msgs/cmd_vel2d.pb.h>
@@ -31,16 +31,16 @@
 namespace gazebo
 {
   // Forward declaration
-  class PriusHybridPluginPrivate;
+  class AckermannModelPluginPrivate;
 
   /// \brief A model plugin for prius hybrid
-  class PriusHybridPlugin : public ModelPlugin
+  class AckermannModelPlugin : public ModelPlugin
   {
     /// \brief Constructor.
-    public: PriusHybridPlugin();
+    public: AckermannModelPlugin();
 
     /// \brief Destructor.
-    public: virtual ~PriusHybridPlugin();
+    public: virtual ~AckermannModelPlugin();
 
     // Documentation Inherited
     public: virtual void Reset();
@@ -105,7 +105,7 @@ namespace gazebo
     private: double GasTorqueMultiplier();
 
     /// \brief Private data
-    private: std::unique_ptr<PriusHybridPluginPrivate> dataPtr;
+    private: std::unique_ptr<AckermannModelPluginPrivate> dataPtr;
 
     /// ROS Namespace
     private: std::string robot_namespace_;
