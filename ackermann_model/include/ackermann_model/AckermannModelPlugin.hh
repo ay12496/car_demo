@@ -26,9 +26,10 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/common/Plugin.hh>
 
-#include <prius_msgs/Control.h>
+#include <ackermann_model/Control.h>
+#include <ackermann_model/Status.h>
 
-#include "ros/ros.h"
+#include <ros/ros.h>
 
 
 namespace gazebo
@@ -307,7 +308,7 @@ namespace gazebo
     public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
 
     /// \brief ROS subscriber callback
-    private: void OnPriusCommand(const prius_msgs::Control::ConstPtr &msg);
+    private: void OnPriusCommand(const ackermann_model::Control::ConstPtr &msg);
 
     /// \brief Callback each time a key message is received.
     /// \param[in] _msg Keypress message.

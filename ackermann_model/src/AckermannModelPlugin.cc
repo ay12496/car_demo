@@ -28,8 +28,6 @@
 #include <gazebo/common/PID.hh>
 #include <gazebo/common/Time.hh>
 
-#include <ros/ros.h>
-
 using namespace gazebo;
 
 /////////////////////////////////////////////////
@@ -48,7 +46,7 @@ AckermannModelPlugin::AckermannModelPlugin()
 }
 
 
-void AckermannModelPlugin::OnPriusCommand(const prius_msgs::Control::ConstPtr &msg)
+void AckermannModelPlugin::OnPriusCommand(const ackermann_model::Control::ConstPtr &msg)
 {
   this->dataPtr->lastSteeringCmdTime = this->dataPtr->world->SimTime();
   this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
@@ -72,13 +70,13 @@ void AckermannModelPlugin::OnPriusCommand(const prius_msgs::Control::ConstPtr &m
 
   switch (msg->shift_gears)
   {
-    case prius_msgs::Control::NEUTRAL:
+    case ackermann_model::Control::NEUTRAL:
       this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
       break;
-    case prius_msgs::Control::FORWARD:
+    case ackermann_model::Control::FORWARD:
       this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
       break;
-    case prius_msgs::Control::REVERSE:
+    case ackermann_model::Control::REVERSE:
       this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
       break;
     default:
