@@ -18,8 +18,8 @@ find_package(ignition-msgs1 REQUIRED)
 
 add_message_files(
 	FILES
-  #Control.msg
-	#Status.msg
+  Control.msg
+	Status.msg
 )
 
 generate_messages(
