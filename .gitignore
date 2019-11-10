@@ -1,6 +1,5 @@
 # Ignore VIM files
 .*.sw?
-CMakeLists.txt
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 .gitignore
