@@ -23,5 +23,5 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS} ${SDFormat_INCLUDE_DIRS})
 
-catkin_install_python(PROGRAMS nodes/joystick_translator
-                      DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(DIRECTORY models DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY worlds DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
