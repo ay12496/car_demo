@@ -15,8 +15,8 @@
  *
 */
 
-#ifndef PRIUSCUP_PLUGINS_ACKERMANNMODELPLUGIN_HH_
-#define PRIUSCUP_PLUGINS_ACKERMANNMODELPLUGIN_HH_
+#ifndef ACKERMANNMODEL_PLUGIN_HH_
+#define ACKERMANNMODEL_PLUGIN_HH_
 
 #include <ignition/math/Vector3.hh>
 #include <ignition/msgs/cmd_vel2d.pb.h>
@@ -292,7 +292,7 @@ namespace gazebo
     public: transport::PublisherPtr worldControlPub;
   };
 
-  /// \brief A model plugin for prius hybrid
+  /// \brief A model plugin for ackermann model
   class AckermannModelPlugin : public ModelPlugin
   {
     /// \brief Constructor.
@@ -308,7 +308,7 @@ namespace gazebo
     public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf);
 
     /// \brief ROS subscriber callback
-    private: void OnPriusCommand(const ackermann_model::Control::ConstPtr &msg);
+    private: void OnCommand(const ackermann_model::Control::ConstPtr &msg);
 
     /// \brief Callback each time a key message is received.
     /// \param[in] _msg Keypress message.

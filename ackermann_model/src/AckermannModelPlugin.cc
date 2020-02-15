@@ -46,7 +46,7 @@ AckermannModelPlugin::AckermannModelPlugin()
 }
 
 
-void AckermannModelPlugin::OnPriusCommand(const ackermann_model::Control::ConstPtr &msg)
+void AckermannModelPlugin::OnCommand(const ackermann_model::Control::ConstPtr &msg)
 {
   this->dataPtr->lastSteeringCmdTime = this->dataPtr->world->SimTime();
   this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
@@ -108,7 +108,7 @@ void AckermannModelPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   if (_sdf->HasElement("robotNamespace"))
     this->robot_namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>() + "/";
   ros::NodeHandle nh(this->robot_namespace_);
-  this->dataPtr->controlSub = nh.subscribe("prius", 10, &AckermannModelPlugin::OnPriusCommand, this);
+  this->dataPtr->controlSub = nh.subscribe("prius", 10, &AckermannModelPlugin::OnCommand, this);
 
   this->dataPtr->node.Subscribe("/prius/reset",
       &AckermannModelPlugin::OnReset, this);
@@ -1031,7 +1031,7 @@ void AckermannModelPlugin::Update()
 
     this->dataPtr->consolePub.Publish(consoleMsg);
 
-    // Output prius car data.
+    // Output ackermann model data.
     this->dataPtr->posePub.Publish(
         ignition::msgs::Convert(this->dataPtr->model->WorldPose()));
 
