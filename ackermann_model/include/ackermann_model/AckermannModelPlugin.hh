@@ -47,10 +47,27 @@ namespace gazebo
               /// \brief Forward
               FORWARD = 1
             };
+    
+    /// \enum ControlMode
+    /// \brief Control Mode: Auto(Planner)/Manual(Keyboard)      
+    public: enum ControlMode {
+              /// \brief Manual
+              Manual,
+              /// \brief Auto
+              Auto
+            };
 
+    ///  \brief NodeHandler
     public: ros::NodeHandle nh;
 
+    /// \brief Control Subcriber
     public: ros::Subscriber controlSub;
+
+    /// \brief Vehicle Status Publisher
+    public: ros::Publisher statusPub;
+
+		/// \brief Status Message
+	  public: ackermann_model::Status statusMsg;
 
     /// \brief Pointer to the world
     public: physics::WorldPtr world;
@@ -287,6 +304,9 @@ namespace gazebo
 
     /// \brief Keyboard control type
     public: int keyControl = 1;
+
+    /// \brief Vehicle Control Auto/Manual mode
+    public: ControlMode controlMode = Manual;
 
     /// \brief Publisher for the world_control topic.
     public: transport::PublisherPtr worldControlPub;

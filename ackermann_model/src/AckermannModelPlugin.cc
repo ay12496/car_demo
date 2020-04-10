@@ -15,6 +15,8 @@
  *
 */
 
+#include "ackermann_model/AckermannModelPlugin.hh"
+
 #include <algorithm>
 #include <fstream>
 #include <mutex>
@@ -24,7 +26,6 @@
 #include <ignition/transport/Node.hh>
 #include <ignition/transport/AdvertiseOptions.hh>
 
-#include "ackermann_model/AckermannModelPlugin.hh"
 #include <gazebo/common/PID.hh>
 #include <gazebo/common/Time.hh>
 
@@ -48,39 +49,41 @@ AckermannModelPlugin::AckermannModelPlugin()
 
 void AckermannModelPlugin::OnCommand(const ackermann_model::Control::ConstPtr &msg)
 {
-  this->dataPtr->lastSteeringCmdTime = this->dataPtr->world->SimTime();
-  this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
+  if(this->dataPtr->controlMode==AckermannModelPluginPrivate::Manual){
+    this->dataPtr->lastSteeringCmdTime = this->dataPtr->world->SimTime();
+    this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
 
-  // Steering wheel command
-  double handCmd = (msg->steer < 0.)
-    ? (msg->steer * -this->dataPtr->handWheelLow)
-    : (msg->steer * this->dataPtr->handWheelHigh);
+    // Steering wheel command
+    double handCmd = (msg->steer < 0.0)
+      ? (msg->steer * -this->dataPtr->handWheelLow)
+      : (msg->steer * this->dataPtr->handWheelHigh);
 
-  handCmd = ignition::math::clamp(handCmd, this->dataPtr->handWheelLow,
-      this->dataPtr->handWheelHigh);
-  this->dataPtr->handWheelCmd = handCmd;
+    handCmd = ignition::math::clamp(handCmd, this->dataPtr->handWheelLow,
+        this->dataPtr->handWheelHigh);
+    this->dataPtr->handWheelCmd = handCmd;
 
-  // Brake command
-  double brake = ignition::math::clamp(msg->brake, 0.0, 1.0);
-  this->dataPtr->brakePedalPercent = brake;
+    // Brake command
+    double brake = ignition::math::clamp(msg->brake, 0.0, 1.0);
+    this->dataPtr->brakePedalPercent = brake;
 
-  // Throttle command
-  double throttle = ignition::math::clamp(msg->throttle, 0.0, 1.0);
-  this->dataPtr->gasPedalPercent = throttle;
+    // Throttle command
+    double throttle = ignition::math::clamp(msg->throttle, 0.0, 1.0);
+    this->dataPtr->gasPedalPercent = throttle;
 
-  switch (msg->shift_gears)
-  {
-    case ackermann_model::Control::NEUTRAL:
-      this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
-      break;
-    case ackermann_model::Control::FORWARD:
-      this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
-      break;
-    case ackermann_model::Control::REVERSE:
-      this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
-      break;
-    default:
-      break;
+    switch (msg->shift_gears)
+    {
+      case ackermann_model::Control::NEUTRAL:
+        this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
+        break;
+      case ackermann_model::Control::FORWARD:
+        this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
+        break;
+      case ackermann_model::Control::REVERSE:
+        this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
+        break;
+      default:
+        break;
+    }
   }
 }
 
@@ -640,7 +643,24 @@ void AckermannModelPlugin::KeyControl(const int _key)
 /////////////////////////////////////////////////
 void AckermannModelPlugin::OnKeyPress(ConstAnyPtr &_msg)
 {
-  this->KeyControl(_msg->int_value());
+  //if key press is 'M' or 'm' toggle between Manual/Auto controlMode
+  if( _msg->int_value()== 77 || _msg->int_value()== 109)
+  {
+    if(dataPtr->controlMode==AckermannModelPluginPrivate::Manual)
+    {
+      dataPtr->controlMode=AckermannModelPluginPrivate::Auto;
+    }
+    else
+    {
+      dataPtr->controlMode=AckermannModelPluginPrivate::Manual;
+    }
+  }
+  else
+  {
+    //check if controlMode is Manual
+    if(dataPtr->controlMode==AckermannModelPluginPrivate::Manual)
+      KeyControl(_msg->int_value());
+  }
 }
 
 /////////////////////////////////////////////////
