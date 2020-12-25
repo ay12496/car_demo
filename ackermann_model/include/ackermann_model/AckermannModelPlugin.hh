@@ -336,7 +336,7 @@ namespace gazebo
 
     /// \brief Callback each time a key message is received.
     /// \param[in] _msg Keypress message.
-    private: void OnKeyPressIgn(const ignition::msgs::Any &_msg);
+    // private: void OnKeyPressIgn(const ignition::msgs::Any &_msg);
 
     /// \brief Key control
     /// \param[in] _key key value

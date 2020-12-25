@@ -54,9 +54,7 @@ void AckermannModelPlugin::OnCommand(const ackermann_model::Control::ConstPtr &m
     this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
 
     // Steering wheel command
-    double handCmd = (msg->steer < 0.0)
-      ? (msg->steer * -this->dataPtr->handWheelLow)
-      : (msg->steer * this->dataPtr->handWheelHigh);
+    double handCmd = msg->steer * this->dataPtr->handWheelHigh;
 
     handCmd = ignition::math::clamp(handCmd, this->dataPtr->handWheelLow,
         this->dataPtr->handWheelHigh);
@@ -408,8 +406,7 @@ void AckermannModelPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   this->dataPtr->worldControlPub =
     this->dataPtr->gznode->Advertise<msgs::WorldControl>("~/world_control");
 
-  this->dataPtr->node.Subscribe("/keypress", &AckermannModelPlugin::OnKeyPressIgn,
-      this);
+  // this->dataPtr->node.Subscribe("/keypress", &AckermannModelPlugin::OnKeyPressIgn,this);
 }
 
 /////////////////////////////////////////////////
@@ -554,10 +551,14 @@ void AckermannModelPlugin::KeyControlTypeB(const int _key)
     case 119:
     {
       this->dataPtr->brakePedalPercent = 0.0;
-      this->dataPtr->gasPedalPercent += 0.1;
-      this->dataPtr->gasPedalPercent =
+      if (this->dataPtr->directionState != AckermannModelPluginPrivate::FORWARD){
+        this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
+        this->dataPtr->gasPedalPercent = 0.0;
+      }else{
+        this->dataPtr->gasPedalPercent += 0.1;
+      }
+      this->dataPtr->gasPedalPercent = 
           std::min(this->dataPtr->gasPedalPercent, 1.0);
-      this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
       this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
       break;
     }
@@ -576,12 +577,13 @@ void AckermannModelPlugin::KeyControlTypeB(const int _key)
     case 115:
     {
       this->dataPtr->brakePedalPercent = 0.0;
-      if (this->dataPtr->directionState != AckermannModelPluginPrivate::REVERSE)
+      if (this->dataPtr->directionState != AckermannModelPluginPrivate::REVERSE){
+        this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
         this->dataPtr->gasPedalPercent = 0.0;
+      }
       this->dataPtr->gasPedalPercent += 0.1;
       this->dataPtr->gasPedalPercent =
           std::min(this->dataPtr->gasPedalPercent, 1.0);
-      this->dataPtr->directionState = AckermannModelPluginPrivate::REVERSE;
       this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
       break;
     }
@@ -599,7 +601,8 @@ void AckermannModelPlugin::KeyControlTypeB(const int _key)
     case 69:
     case 101:
     {
-      this->dataPtr->brakePedalPercent = 1.0;
+      this->dataPtr->brakePedalPercent = 
+        std::min(this->dataPtr->brakePedalPercent + 0.1, 1.0);
       this->dataPtr->gasPedalPercent = 0.0;
       this->dataPtr->lastPedalCmdTime = this->dataPtr->world->SimTime();
       break;
@@ -664,10 +667,10 @@ void AckermannModelPlugin::OnKeyPress(ConstAnyPtr &_msg)
 }
 
 /////////////////////////////////////////////////
-void AckermannModelPlugin::OnKeyPressIgn(const ignition::msgs::Any &_msg)
-{
-  this->KeyControl(_msg.int_value());
-}
+// void AckermannModelPlugin::OnKeyPressIgn(const ignition::msgs::Any &_msg)
+// {
+//   this->KeyControl(_msg.int_value());
+// }
 
 /////////////////////////////////////////////////
 void AckermannModelPlugin::OnReset(const ignition::msgs::Any & /*_msg*/)
@@ -710,7 +713,7 @@ void AckermannModelPlugin::Reset()
   this->dataPtr->lastModeCmdTime = 0;
   this->dataPtr->lastPedalCmdTime = 0;
   this->dataPtr->lastSteeringCmdTime = 0;
-  this->dataPtr->directionState = AckermannModelPluginPrivate::FORWARD;
+  this->dataPtr->directionState = AckermannModelPluginPrivate::NEUTRAL;
   this->dataPtr->flWheelSteeringCmd = 0;
   this->dataPtr->frWheelSteeringCmd = 0;
   this->dataPtr->handWheelCmd = 0;
@@ -783,8 +786,8 @@ void AckermannModelPlugin::Update()
   // PID (position) steering
   this->dataPtr->handWheelCmd =
     ignition::math::clamp(this->dataPtr->handWheelCmd,
-        -this->dataPtr->maxSteer / this->dataPtr->steeringRatio,
-        this->dataPtr->maxSteer / this->dataPtr->steeringRatio);
+        this->dataPtr->handWheelLow,
+        this->dataPtr->handWheelHigh);
   double steerError =
       this->dataPtr->handWheelAngle - this->dataPtr->handWheelCmd;
   double steerCmd = this->dataPtr->handWheelPID.Update(steerError, dt);
