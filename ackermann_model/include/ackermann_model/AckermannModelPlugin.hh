@@ -78,6 +78,7 @@ namespace gazebo
     /// \brief Transport node
     public: transport::NodePtr gznode;
 
+    /*TODO: find ignition module working. For now removing ignition code as no use found
     /// \brief Ignition transport node
     public: ignition::transport::Node node;
 
@@ -86,6 +87,7 @@ namespace gazebo
 
     /// \brief Ignition transport console pub
     public: ignition::transport::Node::Publisher consolePub;
+    */
 
     /// \brief Physics update event connection
     public: event::ConnectionPtr updateConnection;

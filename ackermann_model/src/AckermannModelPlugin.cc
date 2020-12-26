@@ -110,7 +110,8 @@ void AckermannModelPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     this->robot_namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>() + "/";
   ros::NodeHandle nh(this->robot_namespace_);
   this->dataPtr->controlSub = nh.subscribe("prius", 10, &AckermannModelPlugin::OnCommand, this);
-
+  
+  /*TODO: find ignition module working. For now removing ignition code as no use found
   this->dataPtr->node.Subscribe("/prius/reset",
       &AckermannModelPlugin::OnReset, this);
   this->dataPtr->node.Subscribe("/prius/stop",
@@ -126,7 +127,7 @@ void AckermannModelPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
       "/prius/pose");
   this->dataPtr->consolePub =
     this->dataPtr->node.Advertise<ignition::msgs::Double_V>("/prius/console");
-
+  */
   std::string chassisLinkName = dPtr->model->GetName() + "::"
     + _sdf->Get<std::string>("chassis");
   dPtr->chassisLink = dPtr->model->GetLink(chassisLinkName);
@@ -688,6 +689,7 @@ void AckermannModelPlugin::OnStop(const ignition::msgs::Any & /*_msg*/)
   ignition::msgs::StringMsg rep;
   bool result = false;
   unsigned int timeout = 5000;
+  /*TODO: find ignition module working. For now removing ignition code as no use found
   bool executed = this->dataPtr->node.Request("/priuscup/upload",
       req, timeout, rep, result);
   if (executed)
@@ -699,6 +701,7 @@ void AckermannModelPlugin::OnStop(const ignition::msgs::Any & /*_msg*/)
   {
     std::cerr << "Service call timed out" << std::endl;
   }
+  */
 }
 
 /////////////////////////////////////////////////
@@ -1010,8 +1013,9 @@ void AckermannModelPlugin::Update()
 
   if ((curTime - this->dataPtr->lastMsgTime) > .5)
   {
-    this->dataPtr->posePub.Publish(
-        ignition::msgs::Convert(this->dataPtr->model->WorldPose()));
+    //TODO: find ignition module working. For now removing ignition code as no use found
+    // this->dataPtr->posePub.Publish(
+    //     ignition::msgs::Convert(this->dataPtr->model->WorldPose()));
 
     ignition::msgs::Double_V consoleMsg;
 
@@ -1051,13 +1055,14 @@ void AckermannModelPlugin::Update()
 
     // Battery state
     consoleMsg.add_data(this->dataPtr->batteryCharge);
-
+    
+    /*TTODO: find ignition module working. For now removing ignition code as no use found
     this->dataPtr->consolePub.Publish(consoleMsg);
 
     // Output ackermann model data.
     this->dataPtr->posePub.Publish(
         ignition::msgs::Convert(this->dataPtr->model->WorldPose()));
-
+    */
     this->dataPtr->lastMsgTime = curTime;
   }
 
